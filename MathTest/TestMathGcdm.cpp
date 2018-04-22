@@ -10,7 +10,7 @@ using IntegerVector = std::vector<int>;
 
 std::list<IntegerVector> numbers;
 
-class MathgcdmTest :
+class TestMathgcdm :
     public ::testing::TestWithParam<IntegerVector> {
 
 public:
@@ -28,11 +28,11 @@ Integer dot(InIt1 first1, InIt1 last1, InIt2 first2) {
     return ret;
 }
 
-TEST_P(MathgcdmTest, ExEuclideanAlgoForMultipleIntegers) {
+TEST_P(TestMathgcdm, ExEuclideanAlgoOnMultipleIntegers) {
     auto aa = GetParam();
+    IntegerVector xx;
     
-    auto g = 0;
-    IntegerVector xx;   
+    auto g = 0;   
     auto t = knylaw::timing::measure([&]() {
         g = knylaw::math::gcdm(aa.cbegin(), aa.cend(), std::back_inserter(xx));
     }).count();
@@ -42,9 +42,21 @@ TEST_P(MathgcdmTest, ExEuclideanAlgoForMultipleIntegers) {
     EXPECT_EQ(g, r);
 }
 
+TEST_P(TestMathgcdm, EuclideanAlgoOnMultipleIntegers) {
+    auto aa = GetParam();
+    IntegerVector xx;
 
+    auto g = 0;
+    auto t = knylaw::timing::measure([&]() {
+        g = knylaw::math::gcdm(aa.begin(), aa.end());
+    }).count();
+    std::cout << t << "ms used" << std::endl;
 
-INSTANTIATE_TEST_CASE_P(ReadFromFilePerLine, MathgcdmTest, ::testing::ValuesIn(numbers));
+    auto r = knylaw::math::gcdm(aa.cbegin(), aa.cend(), std::back_inserter(xx));
+    EXPECT_EQ(g, r);
+}
+
+INSTANTIATE_TEST_CASE_P(ReadFromFilePerLine, TestMathgcdm, ::testing::ValuesIn(numbers));
 
 namespace std {
     std::istream& operator>>(std::istream& in, IntegerVector& pair) {
@@ -57,11 +69,20 @@ namespace std {
         }
         return in;
     }
+
+    std::ostream& operator<<(std::ostream& out, const IntegerVector& pair) {
+        out << "{ ";
+        for (auto i : pair) {
+            out << i << ", ";
+        }
+        out << " }";
+        return out;
+    }
 }
 
 int main(int argc, char* argv[], char* envp[]) {
     // TODO main
-    std::ifstream input("ExEuclideanAlgoForMultipleIntegers.txt");
+    std::ifstream input("TestMathGcdm.txt");
     IntegerVector temp;
     while (input >> temp) {
         numbers.push_back(temp);

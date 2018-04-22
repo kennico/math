@@ -1,7 +1,11 @@
 #pragma once
 #include <list>
+#include <vector>
 #include <iterator>
+#include <cassert>
+#include <algorithm>
 
+#include "utils.h"
 /*
 Integer + - * / = % copy ctor Integer(1)
 */
@@ -20,10 +24,6 @@ namespace math {
 
     }
 
-
-
-
-
     /*
     Using euclidean algorithm.
     Return the greatest common (positive)divisor of a and b
@@ -35,10 +35,41 @@ namespace math {
         else
             return details::gcd_recur<Integer>(std::abs(a), std::abs(b));
     }
+    /*
+    Using extended euclidean algorithm
+    Return the greatest common (positive)divisor of a and b
+    Chap.6
+    */
+    template<typename Integer>
+    Integer gcd(Integer a, Integer b, Integer * X, Integer * Y) {
+        Integer x, y, g;
+
+        if (a == 0 || b == 0) {
+            g = std::max(std::abs(a), std::abs(b));
+            x = std::min(std::abs(a), 1);
+            y = std::min(std::abs(b), 1);
+        } else {
+            Integer xpp = 1, xp = 0;
+            g = details::gcd_recur<Integer>(std::abs(a), std::abs(b), &xpp, &xp);
+            x = (std::abs(a) / a) * xp;
+            y = (g - x * a) / b;
+        }
+
+        if (X) {
+            *X = x;
+        }
+
+        if (Y) {
+            *Y = y;
+        }
+
+        return g;
+    }
 
     template<typename InIt,
         typename Integer = typename std::iterator_traits<InIt>::value_type>
     Integer gcdm(InIt first, InIt last) {
+        assert(first != last);
 
         Integer g = *(first++);
         std::for_each(first, last, [&](auto n) {
@@ -47,60 +78,36 @@ namespace math {
 
         return g;
     }
-    /*
-    Using extended euclidean algorithm
-    Return the greatest common (positive)divisor of a and b
-    Chap.6
-    */
-    template<typename Integer>
-    Integer gcd(Integer a, Integer b, Integer* X, Integer* Y) {
 
-        Integer x, y, d;
-
-        if (a == 0 || b == 0) {
-            d = std::max(std::abs(a), std::abs(b));
-            x = std::min(std::abs(a), 1);
-            y = std::min(std::abs(b), 1);
-        } else {
-            Integer xpp = 1, xp = 0;
-            d = details::gcd_recur<Integer>(std::abs(a), std::abs(b), &xpp, &xp);
-            x = (std::abs(a) / a) * xp;
-            y = (d - x * a) / b;
-        }
-
-        if (X)
-            *X = x;
-
-        if (Y)
-            *Y = y;
-
-        return d;
-    }
-
+    // Output result in the other associated with the input values
     template<typename InIt,
         typename OutIt,
         typename Integer = typename std::iterator_traits<InIt>::value_type>
-    Integer gcdm(InIt first, InIt last, OutIt output) {
+    Integer gcdm(InIt first, InIt last, OutIt output) {       
+        assert(first != last);
 
-        Integer a = *(first++);
+        Integer g = *(first++);
         // 1 is pushed.
-        std::list<Integer> temp = { 1 };
+        std::list<Integer> tempx, tempy = { 1 };
         // Call gcd() function on every number along with the previous gcd
+        Integer x, y;
         std::for_each(first, last, [&](auto n) {
-            Integer x, y;
-            a = gcd<Integer>(a, n, &x, &y);
-            // TODO
-            std::for_each(temp.begin(), temp.end(), [=](Integer& xx) {
-                xx = xx * x;
-            });
-            temp.push_back(y);
+            g = gcd<Integer>(g, n, &x, &y);
+            tempx.push_back(x);
+            tempy.push_back(y);
+        });
+        tempx.push_back(1); // align with tempy
+        
+        Integer accu = 1; // handle xx
+        knylaw::for_each(tempx.rbegin(), tempx.rend(), tempy.rbegin(), [&](auto& rx, auto ry) {
+            accu *= rx;
+            rx = accu * ry;
+        });
+        std::for_each(tempx.begin(), tempx.end(), [&](auto xx) {
+            output = xx;
         });
 
-        std::for_each(temp.cbegin(), temp.cend(), [&](auto n) {
-            output = n;
-        });
-
-        return a;
+        return g;
     }
     /*
     Linear equation. If parameter positive is true then *ptrX is always positive.
@@ -134,7 +141,7 @@ namespace math {
     template<typename InIt,
         typename Integer = typename std::iterator_traits<InIt>::value_type>
     Integer lieq(InIt first, InIt last, Integer c) {
-        Integer g = gcdm<InIt, Integer>(first, last);
+        Integer g = gcdm<InIt>(first, last);
         return c%g == 0 ? g : 0;
     }
 
