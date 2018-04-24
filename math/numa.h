@@ -20,21 +20,12 @@ namespace math {
 
         public:
 
-            InterpolationBase() : Mpoints() {
+            InterpolationBase() = default;
 
-            }
-
-            // Expect container of coordinates
+            // Expect container holding struct of Point type
             template<typename InIt> void accept(InIt first, InIt last) {
                 std::for_each(first, last, [=](auto p) {
                     this->Mpoints.push_back(p);
-                });
-            }
-
-            // Expect x
-            template<typename InIt, typename Function> void accept(InIt first, InIt last, Function f) {
-                std::for_each(first, last, [=](auto x) {
-                    this->Mpoints.push_back({ x, f(x) });
                 });
             }
 
@@ -54,17 +45,12 @@ namespace math {
 
     }
 
-    class NewtonPolynormial : public details::InterpolationBase {
+    class NewtonPoly : 
+        public details::InterpolationBase {
 
     public:
 
-        NewtonPolynormial() : InterpolationBase(), Mdiffs() {
-
-        }
-
-    public:
-
-        inline void computeDiffs() {
+        inline void initialize() {
             assert(points().size() > 0);
 
             for (auto p : points()) {
@@ -80,7 +66,7 @@ namespace math {
 
     public:
 
-        inline Float input(Float xx) {
+        inline Float input(Float xx) const {
             assert(Mdiffs.size() > 0);
 
             Float w = 1, ret = Mdiffs[0];
@@ -95,5 +81,39 @@ namespace math {
         std::vector<Float> Mdiffs;
     };
 
+    class LagrangePoly : 
+        public details::InterpolationBase {
+    public:
+        inline void initialize() {
+            // TODO
+        }
+
+        inline Float input(Float xx) const {
+            // TODO
+            return 0.0;
+        }
+    };
+
+    template<typename Intrpl, // interpolation type
+        typename InIt> // iterator of container holding Point struct
+    Intrpl interpolation(InIt first, InIt last) {
+        Intrpl intrpl;
+        intrpl.accept(first, last);
+        intrpl.initialize();
+        return intrpl;
+    }
+
+    template<typename Intrpl, // interpolation type
+        typename InIt, // iterator of container holding numbers
+        typename Func> // function that will be applied to the numbers above
+    Intrpl interpolation(InIt first, InIt last, Func f) {
+        std::vector<Point> ps;
+        std::for_each(first, last, [&ps, f](auto num) {
+            ps.push_back({ num, f(num) });
+        });
+        return interpolation<Intrpl>(ps.begin(), ps.end());
+    }
+    
+    
 }
 }

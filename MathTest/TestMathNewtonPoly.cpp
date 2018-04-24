@@ -5,23 +5,24 @@
 #include "numa.h"
 #pragma comment(lib, "math.lib")
 
-using Float = knylaw::math::Float;
+
 using Point = knylaw::math::Point;
+using knylaw::math::interpolation;
+using knylaw::math::NewtonPoly;
+
+
 
 TEST(TestMathNewtonPoly, Sample) {
     std::vector<Point> data = {
          {0.8, 0.88811},{ 0.4, 0.41075 } ,{0.9, 1.02652},{ 0.65, 0.69675 },{ 0.55, 0.57815 }
     };
 
-    knylaw::math::NewtonPolynormial poly;
-    poly.accept(data.begin(), data.end());
-    poly.computeDiffs();
-
-    auto r = poly.input(tx);
-    auto e = f(tx);
+    auto poly = interpolation<NewtonPoly>(data.begin(), data.end());
+    auto r = poly.input(0.6);
+    auto e = 0.63665;
     auto diff = std::abs(r - e);
 
-    EXPECT_GE(0.00000001, diff) << "Result: " << r << " Expect: " << e;
+    EXPECT_GE(0.00001, diff) << "Result: " << r << " Expect: " << e;
 }
 
 int main(int argc, char* argv[], char* envp[]) {

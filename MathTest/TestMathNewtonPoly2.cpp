@@ -5,8 +5,15 @@
 #include "numa.h"
 #pragma comment(lib, "math.lib")
 
+
+
+
 using Float = knylaw::math::Float;
 using FloatVector = std::vector<Float>;
+using knylaw::math::interpolation;
+using knylaw::math::NewtonPoly;
+
+
 
 std::list<FloatVector> inputs;
 
@@ -22,24 +29,23 @@ double randf(double from, double to) {
 }
 
 TEST_P(TestMathNewtonPoly, SquareFunction) {
-    auto f = [](Float n) {
+
+    auto square = [](Float n) {
         return n * n;
     };
 
     auto data = GetParam();
     
-    knylaw::math::NewtonPolynormial poly;
-    poly.accept(data.begin(), data.end(), f);
-    poly.computeDiffs();
+    auto poly = interpolation<NewtonPoly>(data.begin(), data.end(), square);
 
     auto minmax = std::minmax_element(data.begin(), data.end());
     auto tx = randf(*minmax.first, *minmax.second);
 
     auto r = poly.input(tx);
-    auto e = f(tx);
+    auto e = square(tx);
     auto diff = std::abs(r-e);
 
-    EXPECT_GE(0.00000001, diff) << "Result: " << r << " Expect: " << e;
+    EXPECT_GE(0.00001, diff) << "Result: " << r << " Expect: " << e;
 }
 
 INSTANTIATE_TEST_CASE_P(ReadFloatPerLine, TestMathNewtonPoly, testing::ValuesIn(inputs));
