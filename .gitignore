@@ -12,6 +12,7 @@ knutils/
 jnumt/
 cpptest/
 Win32-Debug/
+x64-Debug/
 packages/
 Debug/
 
