@@ -5,7 +5,7 @@
 #include <cassert>
 #include <algorithm>
 
-#include "utils.h"
+#include "../utils.h"
 /*
 Integer + - * / = % copy ctor Integer(1)
 */
@@ -16,7 +16,7 @@ namespace math {
 
     using CInteger = long;
 
-    namespace details {
+    namespace impl {
 
         template<typename Integer> Integer gcd_recur(Integer a, Integer b);
         template<typename Integer> Integer gcd_recur(Integer a, Integer b, Integer* xpp, Integer* xp);
@@ -33,7 +33,7 @@ namespace math {
         if (a == 0 || b == 0)
             return std::max(std::abs(a), std::abs(b));
         else
-            return details::gcd_recur<Integer>(std::abs(a), std::abs(b));
+            return impl::gcd_recur<Integer>(std::abs(a), std::abs(b));
     }
     /*
     Using extended euclidean algorithm
@@ -50,7 +50,7 @@ namespace math {
             y = std::min(std::abs(b), 1);
         } else {
             Integer xpp = 1, xp = 0;
-            g = details::gcd_recur<Integer>(std::abs(a), std::abs(b), &xpp, &xp);
+            g = impl::gcd_recur<Integer>(std::abs(a), std::abs(b), &xpp, &xp);
             x = (std::abs(a) / a) * xp;
             y = (g - x * a) / b;
         }
@@ -185,7 +185,7 @@ namespace math {
 
         for (Integer factor = 2; factor <= number; factor++) {
             Integer power = 0;
-            details::highest_power(number, factor, &power, &number);
+            impl::highest_power(number, factor, &power, &number);
 
             if (power > 0) {
                 pairs = FactorPowerPair<Integer>(factor, power);
@@ -275,7 +275,7 @@ namespace math {
 
 
     // implementations
-    namespace details {
+    namespace impl {
 
         template<typename Integer> Integer gcd_recur(Integer a, Integer b) {
             Integer rem = a % b;

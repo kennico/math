@@ -1,0 +1,211 @@
+#pragma once
+#include <vector>
+#include <algorithm>
+
+namespace knylaw {
+namespace math {
+
+    using Float = double;
+
+namespace details {
+
+
+        
+    template<typename Element, 
+        typename Container=std::vector<Element>>
+    class ImplData {
+
+    public:
+
+        inline const Container & data() const {
+            return Mdata;
+        }
+
+        inline size_t count() const {
+            return Mdata.size();
+        }
+
+        template<typename InIt> 
+        inline void accept(InIt first, InIt last) {
+            std::for_each(first, last, [=](auto input) {
+                this->Mdata.push_back(input);
+            });
+        }
+
+    protected:
+
+        inline Container & data() {
+            return Mdata;
+        }
+
+    private:
+        Container       Mdata;
+
+    };
+    
+
+    template<typename Input> struct InputTraits;
+
+    struct FloatArray_Xgeter {
+        inline Float operator()(const Float* array) const {
+            return array[0];
+        }
+    };
+
+    struct FloatArray_Ygeter {
+        inline Float operator()(const Float* array) const {
+            return array[1];
+        }
+    };
+
+    template<> struct InputTraits<const Float*> {
+        using Xgeter    = FloatArray_Xgeter;
+        using Ygeter    = FloatArray_Ygeter;
+        using Numeric   = Float;
+    };
+    
+
+    template<typename Input,
+        typename Traits = InputTraits<Input>,
+        typename Container = std::vector<Input>>
+    class Coord2dData 
+        : public ImplData<Input, Container> {
+
+    public:    
+        using Numeric   = typename Traits::Numeric;
+
+    public:
+
+        inline Numeric X(size_t index) const {
+                
+            return Mgetx(data()[index]);
+        }
+
+        inline Numeric Y(size_t index) const {
+
+            return Mgety(data()[index]);
+        }
+
+    private:
+
+        typename Traits::Xgeter Mgetx;// overload Numberic operator()(Input input)
+        typename Traits::Ygeter Mgety;// overload Numberic operator()(Input input)
+
+    };
+
+
+    template<typename Input,
+        typename Traits = InputTraits<Input>>
+    class IntrplBaseType: 
+        public Coord2dData<Input, Traits> {
+        
+    public:
+
+        inline size_t N() const {
+            return count() - 1;
+        }
+
+    };
+
+
+    template<typename Input,
+        typename Traits = details::InputTraits<Input>>
+    class NewtonPoly :
+        public details::IntrplBaseType<Input, Traits> {
+
+    public:
+
+        using Numeric = details::IntrplBaseType<Input, Traits>::Numeric;
+
+        inline void initialize() {
+            for (size_t i = 0; i < count(); i++) {
+                Mdiffs.push_back(Y(i));
+            }
+
+            for (size_t d = 1; d <= N(); d++) { // compute the differences of degree d+1
+                for (size_t i = N(); i >= d; i--) {
+                    Mdiffs[i] = (Mdiffs[i] - Mdiffs[i - 1]) / (X(i) - X(i - d));
+                }
+            }
+        }
+
+        inline Numeric input(Numeric xx) const {
+            Numeric w = 1, ret = Mdiffs[0];
+
+            for (size_t i = 1; i < count(); i++) {
+                w *= (xx - X(i - 1));
+                ret += Mdiffs[i] * w;
+            }
+            return ret;
+        }
+
+    private:
+
+        std::vector<Numeric> Mdiffs;
+
+    };
+        
+
+    template<typename Input,
+        typename Traits = details::InputTraits<Input>>
+    class LagrangePoly :
+        public IntrplBaseType<Input, Traits, Container> {
+    public:
+        
+        using Numeric = details::IntrplBaseType<Input, Traits, Container>::Numeric;
+
+        // O(N^2)
+        inline void initialize() {
+            for (size_t i = 0; i < count(); ++i) {
+                Numeric w = 1.0;
+                for (size_t j = 0; j < count(); ++j) {
+                    if (j != i) {
+                        w *= X(i) - X(j);
+                    }
+                }
+                w = 1.0 / w;
+                Mweights.push_back(w);
+            }
+        }
+
+        // O(N^2) 
+        // Not optimized.
+        inline Float input(Numeric xx) const {
+            Numeric ret = 0;
+            for (size_t i = 0; i < count(); i++) {
+                auto w = Mweights[i] * Y(i);
+                for (size_t j = 0; j < count(); j++) {
+                    if (j != i) {
+                        w *= xx - X(j);
+                    }
+                }
+                ret += w;
+            }
+            return ret;
+        }
+
+    private:
+
+        std::vector<Numeric> Mweights;
+    };
+
+}
+
+//
+// For cubic spline interpolation, the collection of x shall be ordered.
+//
+template<typename Intrpl, // interpolation type
+    typename InIt> // iterator of container holding input data
+Intrpl interpolation(InIt pfirst, InIt plast) {
+
+    using Input = std::iterator_traits<InIt>::value_type;
+
+    Intrpl intrpl;
+    intrpl.accept(pfirst, plast);
+    intrpl.initialize();
+    return intrpl;
+}
+
+
+}
+}

@@ -3,6 +3,29 @@
 namespace knylaw {
 namespace math {
 
+    namespace details {
+        // constexpr?
+        size_t InterpolationBase::N() const {
+            return count() - 1;
+        }
+
+        // constexpr?
+        size_t InterpolationBase::count() const {
+            return Mdata.size();
+        }
+        
+        Float InterpolationBase::x(int index) const {
+            return Mdata[index].x;
+        }
+
+        Float InterpolationBase::y(int index) const {
+            return Mdata[index].y;
+        }
+
+        const std::vector<Point>& InterpolationBase::points() const {
+            return Mdata;
+        }
+    }
 
 void CubicSpline::initialize() {
 

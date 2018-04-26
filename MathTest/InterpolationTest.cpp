@@ -6,7 +6,7 @@ namespace math {
 namespace test {
 
 
-const std::list<std::vector<Float>> data = { 
+const std::list<std::vector<double>> data = { 
     { 11.65, 14.42, 21.92, 43.70, 71.43, 73.93, 98.71 },
     { 10.90, 30.95, 39.42, 48.22, 64.06, 66.51, 71.20 },
     { 11.45, 14.58, 20.69, 27.08, 45.16, 75.72, 84.54 },

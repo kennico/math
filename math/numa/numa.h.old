@@ -29,36 +29,20 @@ namespace math {
             // Expect two containers
             template<typename InIt> 
             void accept(InIt pfirst, InIt plast) {
-                std::for_each(pfirst, plast, [=](auto p) {
-                    this->Mpoints.push_back(p);
+                std::for_each(pfirst, plast, [=](auto e) {
+                    this->Mdata.push_back(e);
                 });
             }
 
-            // constexpr?
-            inline size_t N() const {
-                return count() - 1;
-            }
-
-			// constexpr?
-			inline size_t count() const {
-				return Mpoints.size();
-			}
-
-			inline Float x(int index) const {
-				return Mpoints[index].x;
-			}
-
-			inline Float y(int index) const {
-				return Mpoints[index].y;
-			}
-
-            inline const std::vector<Point>& points() const {
-                return Mpoints;
-            }
+            size_t N() const;
+            size_t count() const;
+            Float x(int index) const;
+            Float y(int index) const;
+            const std::vector<Point>& points() const;
         
         private:
             
-			std::vector<Point> Mpoints;
+			std::vector<Point> Mdata;
 
         };	
 

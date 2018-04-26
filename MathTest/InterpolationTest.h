@@ -4,7 +4,8 @@
 #include <vector>
 #include <list>
 
-#include "numa.h"
+#include "numa\intrpl.h"
+#include "utils.h"
 
 namespace knylaw {
 namespace math {
@@ -21,7 +22,7 @@ inline double randf(double from, double to) {
 }
 
 
-extern const std::list<std::vector<Float>> data;
+extern const std::list<std::vector<double>> data;
 
 
 }
