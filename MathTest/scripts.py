@@ -12,7 +12,7 @@ def intpairs(filename, stop=10000, times=16, per=1):
 def floatnums(filename, number=32, rng=(0.0, 1.0), per=1, precision=4):
     from random import uniform
     
-    r = [uniform(*rng) for i in range(per*number)]
+    r = sorted([uniform(*rng) for i in range(per*number)])
     fmt = " ".join(["%." + str(precision) + "f"] * per) + "\n"
     with open(filename, mode="w") as f:
         for i in range(0, len(r), per):

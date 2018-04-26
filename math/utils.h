@@ -13,10 +13,13 @@ namespace knylaw{
         }
         return f;
     }
+    
     //template<typename InIt, typename Func>
     //Func for_each_step(InIt first, InIt last, size_t step, Func f) {        
     //}
 
+
+#if _MSC_VER > 1700
     // Formatted std::string
     template<typename... Args>
     std::string stringf(const std::string& format, Args... args) {
@@ -25,6 +28,7 @@ namespace knylaw{
         snprintf(buf.get(), size, format.c_str(), args ...);
         return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
     }
+#endif
 
     // For class instance that needs a name
     class NameUtility {
@@ -55,12 +59,25 @@ namespace knylaw{
 
     namespace timing {
 
+#if _MSC_VER > 1700
+
         using TimePoint = decltype(std::chrono::high_resolution_clock::now());
         using Nano = std::chrono::nanoseconds;
         using Milli = std::chrono::milliseconds;
         using Micro = std::chrono::microseconds;
         using Sec = std::chrono::seconds;
         using Min = std::chrono::milliseconds;
+
+#else
+
+		typedef std::chrono::system_clock::time_point TimePoint;
+        typedef std::chrono::nanoseconds Nano ;
+        typedef std::chrono::milliseconds Milli;
+        typedef std::chrono::microseconds Micro;
+        typedef std::chrono::seconds Sec;
+        typedef std::chrono::milliseconds Min;
+
+#endif
 
         class Period {
 
@@ -99,12 +116,15 @@ namespace knylaw{
             return Period(from, to);
         }
 
+#if _MSC_VER > 1700
         template<typename Func, typename Duration=Milli>
         Duration measure(Func f) {
             auto p = elapsed(f);
             return p.cast<Duration>();
         }
+#endif
+
+
     }
-    
 
 }
