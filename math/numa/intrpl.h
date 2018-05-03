@@ -1,48 +1,224 @@
 #pragma once
-#include "common.h"
-
+#include <vector>
 #include <algorithm>
 #include <cassert>
 
 namespace knylaw {
 namespace math {
 
+    namespace impl {
 
-    class NewtonPoly: public impl::NumaDataxy<Point2d> {
+        template<typename Real> class Point2d;
+        template<typename Real> class Point2ddy;
+        template<typename Elem, typename Cont = std::vector<Elem>> class IntrplBaseType;
+        template<typename Coord> class XyData;
+        template<typename Coordd> class XyDerivData;
+
+        template<typename Real>
+        class Point2d {
+
+        public:
+
+            using Numeric = Real;
+
+            Numeric x, y;
+
+        public:
+
+            Point2d() = default;
+
+            Point2d(Numeric x_, Numeric y_) : x(x_), y(y_) {
+
+            }
+
+            ~Point2d() = default;
+        };
+
+        template<typename Elem, typename Cont>
+        class IntrplBaseType {
+
+        public:
+
+            using DataCont = Cont;
+            using Element = Elem;
+
+        protected:
+
+            IntrplBaseType() = default;
+
+            IntrplBaseType(size_t size) : Mdata(size) {
+
+            }
+
+            inline Element& data(size_t pos) {
+                return Mdata[pos];
+            }
+
+            inline DataCont& data() {
+                return Mdata;
+            }
+
+            inline void assgin(const DataCont& container) {
+                this->Mdata = container;
+            }
+
+        public:
+
+            IntrplBaseType(const DataCont& container) : Mdata(container) {
+
+            }
+
+            ~IntrplBaseType() = default;
+
+        public:
+
+            inline size_t count() const {
+                return Mdata.size();
+            }
+
+            inline const Element & data(size_t pos) const {
+                return Mdata[pos];
+            }
+
+            inline const DataCont & data() const {
+                return Mdata;
+            }
+
+        private:
+
+            DataCont Mdata;
+
+        };
+
+
+        template<typename Coord>
+        class XyData : public IntrplBaseType<Coord> {
+
+        public:
+
+            using Numeric = typename Coord::Numeric;
+            using DataCont = typename IntrplBaseType<Coord>::DataCont;
+
+        protected:
+
+            XyData() = default;
+
+            inline Numeric & X(size_t pos) {
+                return this->data(pos).x;
+            }
+
+            inline Numeric & Y(size_t pos) {
+                return this->data(pos).y;
+            }
+
+        public:
+            //
+            //Pass points by calling constructor
+            //
+            XyData(const DataCont& container) : IntrplBaseType<Coord>(container) {
+
+            }
+
+            ~XyData() = default;
+
+            inline Numeric X(size_t pos) const {
+                return this->data(pos).x;
+            }
+
+            inline Numeric Y(size_t pos) const {
+                return this->data(pos).y;
+            }
+
+            inline size_t N() const {
+                return this->count() - 1;
+            }
+        };
+
+        template<typename Real>
+        class Point2ddy :
+            virtual public Point2d<Real> {
+
+        public:
+
+            using Numeric = typename Point2d<Real>::Numeric;
+
+            Numeric dy;
+
+        public:
+
+            Point2ddy() = default;
+
+            ~Point2ddy() = default;
+
+            Point2ddy(Numeric x_, Numeric y_, Numeric dy_) : Point2d<Numeric>(x_, y_), dy(dy_) {
+
+            };
+
+        };
+
+        template<typename Coordd>
+        class XyDerivData : public XyData<Coordd> {
+
+        public:
+
+            using Numeric = typename XyData<Coordd>::Numeric;
+            using DataCont = typename XyData<Coordd>::DataCont;
+
+        protected:
+
+            XyDerivData() = default;
+
+            inline Numeric & DY(size_t pos) {
+                return this->data(pos).dy;
+            }
+
+        public:
+            //
+            // template argument list is needed on calling constructor of super class
+            //
+            XyDerivData(const DataCont& container) : XyData<Coordd>(container) {
+
+            }
+
+            ~XyDerivData() = default;
+
+            inline Numeric DY(size_t pos) const {
+                return this->data(pos).dy;
+            }
+        };
+
+
+    }
+
+    using Point2d = impl::Point2d<double>;
+    using Point2ddy = impl::Point2ddy<double>;
+
+    class NewtonPoly
+        : public impl::XyData<Point2d> {
 
     public:
 
-        NewtonPoly(const Container& container) : NumaDataxy(container), Mdiffs() {
+        using InputCont = typename XyData<Point2d>::DataCont;
 
+        NewtonPoly(const InputCont& container) : XyData(container), Mdiffs() {
             for (size_t i = 0; i < count(); i++) {
                 Mdiffs.push_back(Y(i));
             }
         
             for (size_t d = 1; d < count(); d++) { // compute the differences of degree d+1
                 for (size_t i = count() - 1; i >= d; i--) {
-                    Mdiffs[i] = (Mdiffs[i] - Mdiffs[i - 1]) / (X(i) - X(i - d));
+                    Mdiffs[i] = (Mdiffs[i] - Mdiffs[i-1]) / (X(i) - X(i-d));
                 }
             }
         }
 
-        //inline void initialize() {
-
-        //    for (size_t i = 0; i < count(); i++) {
-        //        Mdiffs.push_back(Y(i));
-        //    }
-
-        //    for (size_t d = 1; d < count(); d++) { // compute the differences of degree d+1
-        //        for (size_t i = count() - 1; i >= d; i--) {
-        //            Mdiffs[i] = (Mdiffs[i] - Mdiffs[i - 1]) / (X(i) - X(i - d));
-        //        }
-        //    }
-        //}
+        ~NewtonPoly() = default;
 
         inline Numeric input(Numeric xx) const {
 
             Numeric w = 1, ret = Mdiffs[0];
             for (size_t i = 1; i < count(); i++) {
-                w *= (xx - X(i - 1));
+                w *= (xx - X(i-1));
                 ret += Mdiffs[i] * w;
             }
             return ret;
@@ -53,12 +229,15 @@ namespace math {
 
     };
 
-    class LagrangePoly : public impl::NumaDataxy<Point2d> {
+    class LagrangePoly 
+        : public impl::XyData<Point2d> {
 
     public:
 
+        using InputCont = typename XyData<Point2d>::DataCont;
+
         // O(N^2)
-        LagrangePoly(const Container& container): NumaDataxy(container), Mweights() {
+        LagrangePoly(const InputCont& container): XyData(container), Mweights() {
 
             for (size_t i = 0; i < count(); ++i) {
                 Numeric w = 1.0;
@@ -71,6 +250,8 @@ namespace math {
                 Mweights.push_back(w);
             }
         }
+
+        ~LagrangePoly() = default;
 
         // O(N^2)
         inline Numeric input(Numeric xx) const {
@@ -93,69 +274,34 @@ namespace math {
 
     };
 
-    namespace impl {
+    class SectionedCubicHermite
+        : public impl::XyDerivData<Point2ddy> {
+    protected:
 
-        template<typename Real>
-        class Point2dderiv:
-            virtual public Point2d<Real> {
+        SectionedCubicHermite() = default;
 
-        public:
-
-            using Numeric = typename Point2d<Real>::Numeric;
-
-            Point2dderiv() = default;
-            
-            ~Point2dderiv() = default;
-
-            Point2dderiv(Numeric x_, Numeric y_, Numeric dy_) : Point2d<Numeric>(x_, y_), Mdy(dy_) {
-
-            };
-
-            inline Numeric getdy() const {
-                return Mdy;
-            }
-
-        private:
-
-            Numeric Mdy;
-
-        };
-
-        template<typename Coordd>
-        class NumaDataxydy: public NumaDataxy<Coordd> {
-
-        public:
-
-            using Numeric   = typename NumaDataxy<Coordd>::Numeric;
-            using Container = typename NumaDataxy<Coordd>::Container;
-
-        public:
-            //
-            // template argument list is needed on calling constructor of super class
-            //
-            NumaDataxydy(const Container& container) : NumaDataxy<Coordd>(container) {
-
-            }
-
-            inline Numeric DY(size_t pos) const {
-                return this->data(pos).getdy();
+        // operator() overloaded
+        struct compare {
+            inline bool operator()(const Point2ddy& pd, Numeric xx) {
+                return pd.x < xx;
             }
         };
 
-
-    }
-
-    using Point2dderiv = impl::Point2dderiv<double>;
-
-    class SectionedCubicHermite: 
-        public impl::NumaDataxydy<Point2dderiv> {
     public:
 
-        SectionedCubicHermite(const Container& container) : NumaDataxydy(container) {
+        using InputCont = typename XyDerivData<Point2ddy>::DataCont;
+        //
+        // Unlike Newtion polynomial or Lagrange polynomial,
+        // sectioned cubic hermite method requires data non-decreasingly ordered by x coordinate.
+        //
+        SectionedCubicHermite(const InputCont& container) : XyDerivData(container) {
 
         }
 
+        ~SectionedCubicHermite() = default;
+
         inline Numeric input(Numeric xx) const {
+            // search for a range(x_i, x_{i+1}) that xx lies within
             auto ite = std::lower_bound(data().cbegin(), data().cend(), xx, compare());
             auto d = ite - data().cbegin();
             
@@ -164,23 +310,91 @@ namespace math {
 
             Numeric yy = 0;
             auto i = d - 1;
+            // h_i(x)
             yy += (1 + 2 * (xx - X(i)) / (X(i+1) - X(i))) * std::pow((xx-X(i+1)) / (X(i)-X(i+1)), 2) * Y(i);
+            // h_{i+1}(x)
             yy += (1 + 2 * (xx - X(i+1)) / (X(i) - X(i+1))) * std::pow((xx-X(i)) / (X(i+1)-X(i)), 2) * Y(i+1);
+            // h_i^1(x)
             yy += (xx - X(i)) * std::pow((xx - X(i+1)) / (X(i) - X(i+1)),2) * DY(i);
+            // h_{i+1}^1(x)
             yy += (xx - X(i+1)) * std::pow((xx - X(i)) / (X(i+1) - X(i)),2) * DY(i+1);
 
             return yy;
         }
 
-    private:
-
-        struct compare {
-            inline bool operator()(const Point2dderiv& pd, Numeric xx) {
-                return pd.getx() < xx;
-            }
-        };
-
     };
 
+    class CubicSpline 
+        : public SectionedCubicHermite {
+
+    public:
+
+        using InputCont = typename NewtonPoly::InputCont;
+
+    public:
+
+        CubicSpline(const InputCont& cont) : SectionedCubicHermite() {
+            auto back = std::back_inserter(data());
+            std::for_each(cont.cbegin(), cont.cend(), [&](auto p) {
+                back = Point2ddy(p.x, p.y, 0.0);
+            });
+
+            initialize(1.0, 0, 
+                3.0 / (X(1) - X(0)) * (Y(1)-Y(0)),
+                3.0 / (X(N()) - X(N()-1)) * (Y(N()) - Y(N()-1))
+            );
+        }
+        
+        /*
+        * Apply cubic spline method using given values of 1st derivative at x=x_0 and x_n
+        */
+        CubicSpline(const InputCont& cont, Numeric dy0, Numeric dyN) : SectionedCubicHermite() {
+            auto back = std::back_inserter(data());
+            std::for_each(cont.cbegin(), cont.cend(), [&](auto p) {
+                back = Point2ddy(p.x, p.y, 0.0);
+            });
+
+            initialize(0, 1, 2*dy0, 2*dyN);
+        }
+
+    private:
+
+        void initialize(Numeric al0, Numeric alN, Numeric bt0, Numeric btN) {
+
+            std::vector<Numeric> h(count());
+            // compute h_i
+            for (size_t i = 0; i < N(); i++) {
+                h[i] = X(i+1) - X(i);
+            }
+
+            std::vector<Numeric> alpha(count()), beta(count());
+            alpha[0] = al0;
+            alpha[N()] = alN;
+            beta[0] = bt0;
+            beta[N()] = btN;
+
+            // compute alpha_i and beta_i
+            for (size_t i = 1; i < N(); i++) {
+                alpha[i] = h[i-1] / (h[i-1] + h[i]);
+                beta[i] = 3.0 * ((1.0 - alpha[i]) / h[i-1] * (Y(i) - Y(i-1)) + alpha[i] / h[i] * (Y(i+1) - Y(i)));
+            }
+
+            // compute a_i and b_i
+            std::vector<Numeric> a(count()), b(count());
+            a[0] = -alpha[0] / 2.0;
+            b[0] = beta[0] / 2.0;
+            for (size_t i = 1; i < count(); i++) {
+                a[i] = -alpha[i] / (2.0 + (1.0 - alpha[i]) * a[i-1]);
+                b[i] = (beta[i] - (1.0 - alpha[i]) * b[i-1]) / (2 + (1 - alpha[i])*a[i-1]);
+            }
+            
+            // compute and set dy_i          
+            DY(N()) = b[N()];
+            for (int i = N()-1; i > 0; i--) {
+                DY(i) = a[i] * DY(i+1) + b[i];
+            }
+        }
+
+    };
 }
 }
