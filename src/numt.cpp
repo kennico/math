@@ -1,4 +1,4 @@
-#include "numt.h"
+#include "numt/numt.h"
 
 #include <cstdlib>
 #include <algorithm>

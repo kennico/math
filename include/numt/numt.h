@@ -129,11 +129,11 @@ namespace math {
 
         Integer y = (c - a * x) / b;
 
-        if (ptrX != NULL)
-            *ptrX = x;
+        if (X != NULL)
+            *X = x;
 
-        if (ptrY != NULL)
-            *ptrY = y;
+        if (Y != NULL)
+            *Y = y;
 
         return g;
     }
@@ -175,7 +175,7 @@ namespace math {
     Chap.7
     */
     template<typename OutIt,
-        typename Integer = typename std::iterator_traits<InIt>::value_type>
+        typename Integer = typename std::iterator_traits<OutIt>::value_type>
     Integer factor(Integer number, OutIt pairs) {
         Integer count = 1;
 

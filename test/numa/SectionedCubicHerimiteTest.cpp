@@ -9,19 +9,18 @@ class SectionedCubicHermiteTest :
 public:
 };
 
-TEST_P(SectionedCubicHermiteTest, Quadratic) {
+TEST_P(SectionedCubicHermiteTest, Cubic) {
 
     auto d = GetParam();
-    auto X = randf(d.front(), d.back());
-    auto expect = quadratic(X), result = 0.0;
+    auto X = randf(d.front(), d.back()), expect = cubicf(X);
 
     SectionedCubicHermite::InputCont cont;
     std::for_each(d.begin(), d.end(), [&](auto n) {
-        cont.emplace_back(n, quadratic(n), quadraticdy(n));
+        cont.emplace_back(n, cubicf(n), cubicdy(n));
     });
 
     SectionedCubicHermite intrpl(cont);
-    result = intrpl.input(X);
+    auto result = intrpl.input(X);
 
     EXPECT_GE(0.00001, std::abs(result - expect))
         << "test input: " << X
@@ -29,5 +28,6 @@ TEST_P(SectionedCubicHermiteTest, Quadratic) {
         << " Expect: " << expect;
 }
 
-INSTANTIATE_TEST_CASE_P(ReadFromFloatArray, SectionedCubicHermiteTest, ::testing::ValuesIn(data));
+INSTANTIATE_TEST_CASE_P(ReadFromFloatArray, SectionedCubicHermiteTest,
+                        ::testing::ValuesIn(getInput()->cbegin(), getInput()->cend()));
 

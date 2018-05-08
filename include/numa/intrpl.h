@@ -31,7 +31,7 @@ namespace math {
 
             }
 
-            ~Point2d() = default;
+            virtual ~Point2d() = default;
         };
 
         template<typename Elem, typename Cont>
@@ -46,7 +46,7 @@ namespace math {
 
             IntrplBaseType() = default;
 
-            IntrplBaseType(size_t size) : Mdata(size) {
+            explicit IntrplBaseType(size_t size) : Mdata(size) {
 
             }
 
@@ -64,11 +64,11 @@ namespace math {
 
         public:
 
-            IntrplBaseType(const DataCont& container) : Mdata(container) {
+            explicit IntrplBaseType(const DataCont& container) : Mdata(container) {
 
             }
 
-            ~IntrplBaseType() = default;
+            virtual ~IntrplBaseType() = default;
 
         public:
 
@@ -115,11 +115,11 @@ namespace math {
             //
             //Pass points by calling constructor
             //
-            XyData(const DataCont& container) : IntrplBaseType<Coord>(container) {
+            explicit XyData(const DataCont& container) : IntrplBaseType<Coord>(container) {
 
             }
 
-            ~XyData() = default;
+            ~XyData() override = default;
 
             inline Numeric X(size_t pos) const {
                 return this->data(pos).x;
@@ -148,7 +148,7 @@ namespace math {
 
             Point2ddy() = default;
 
-            ~Point2ddy() = default;
+            ~Point2ddy() override = default;
 
             Point2ddy(Numeric x_, Numeric y_, Numeric dy_) : Point2d<Numeric>(x_, y_), dy(dy_) {
 
@@ -176,11 +176,11 @@ namespace math {
             //
             // template argument list is needed on calling constructor of super class
             //
-            XyDerivData(const DataCont& container) : XyData<Coordd>(container) {
+            explicit XyDerivData(const DataCont& container) : XyData<Coordd>(container) {
 
             }
 
-            ~XyDerivData() = default;
+            ~XyDerivData() override = default;
 
             inline Numeric DY(size_t pos) const {
                 return this->data(pos).dy;
@@ -200,7 +200,7 @@ namespace math {
 
         using InputCont = typename XyData<Point2d>::DataCont;
 
-        NewtonPoly(const InputCont& container) : XyData(container), Mdiffs() {
+        explicit NewtonPoly(const InputCont& container) : XyData(container), Mdiffs() {
             for (size_t i = 0; i < count(); i++) {
                 Mdiffs.push_back(Y(i));
             }
@@ -212,7 +212,7 @@ namespace math {
             }
         }
 
-        ~NewtonPoly() = default;
+        ~NewtonPoly() override = default;
 
         inline Numeric input(Numeric xx) const {
 
@@ -237,7 +237,7 @@ namespace math {
         using InputCont = typename XyData<Point2d>::DataCont;
 
         // O(N^2)
-        LagrangePoly(const InputCont& container): XyData(container), Mweights() {
+        explicit LagrangePoly(const InputCont& container): XyData(container), Mweights() {
 
             for (size_t i = 0; i < count(); ++i) {
                 Numeric w = 1.0;
@@ -251,7 +251,7 @@ namespace math {
             }
         }
 
-        ~LagrangePoly() = default;
+        ~LagrangePoly() override = default;
 
         // O(N^2)
         inline Numeric input(Numeric xx) const {
@@ -294,11 +294,11 @@ namespace math {
         // Unlike Newtion polynomial or Lagrange polynomial,
         // sectioned cubic hermite method requires data non-decreasingly ordered by x coordinate.
         //
-        SectionedCubicHermite(const InputCont& container) : XyDerivData(container) {
+        explicit SectionedCubicHermite(const InputCont& container) : XyDerivData(container) {
 
         }
 
-        ~SectionedCubicHermite() = default;
+        ~SectionedCubicHermite() override = default;
 
         inline Numeric input(Numeric xx) const {
             // search for a range(x_i, x_{i+1}) that xx lies within
@@ -309,7 +309,7 @@ namespace math {
             assert(d < count());
 
             Numeric yy = 0;
-            auto i = d - 1;
+            size_t i = static_cast<size_t>(d - 1);
             // h_i(x)
             yy += (1 + 2 * (xx - X(i)) / (X(i+1) - X(i))) * std::pow((xx-X(i+1)) / (X(i)-X(i+1)), 2) * Y(i);
             // h_{i+1}(x)
@@ -324,7 +324,7 @@ namespace math {
 
     };
 
-    class CubicSpline 
+    class CubicSpline
         : public SectionedCubicHermite {
 
     public:
@@ -333,7 +333,7 @@ namespace math {
 
     public:
 
-        CubicSpline(const InputCont& cont) : SectionedCubicHermite() {
+        explicit CubicSpline(const InputCont& cont) : SectionedCubicHermite() {
             auto back = std::back_inserter(data());
             std::for_each(cont.cbegin(), cont.cend(), [&](auto p) {
                 back = Point2ddy(p.x, p.y, 0.0);
