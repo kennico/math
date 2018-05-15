@@ -1,9 +1,4 @@
 project(numa-test)
-# googletest
-find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS})
-# project include dir
-include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_executable(numa-test
         IntegralTest.cpp
@@ -13,4 +8,7 @@ add_executable(numa-test
         LagrangePolyTest.cpp
         SectionedCubicHerimiteTest.cpp
         )
-target_link_libraries(numa-test ${GTEST_LIBRARIES} pthread gtest_main)
+
+target_link_libraries(numa-test ${TEST_LINK_LIBRARIES})
+
+
