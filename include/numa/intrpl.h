@@ -323,7 +323,10 @@ namespace math {
         }
 
     };
-
+    /**
+     * It seems that it only works for cubic functions such as f(x) = 2x^3 + 5x^2 + 7 x – 8.
+     * For polynomials that have lower degree it behaves inaccurately.
+     */
     class CubicSpline
         : public SectionedCubicHermite {
 

@@ -48,8 +48,8 @@ namespace math {
     template<typename Func, typename Real=double>
     Real romberg(Func func, Real a, Real b, Real error, size_t maxrefinements=32) {
 
-        Real* prev = new Real[maxrefinements + 1];
-        Real* next = new Real[maxrefinements + 1];
+        auto * prev = new Real[maxrefinements + 1];
+        auto * next = new Real[maxrefinements + 1];
         
         error = std::abs(error);
         Real result = prev[0] = trapezoidal(func, a, b, 1);

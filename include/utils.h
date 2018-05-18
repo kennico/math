@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
+#include <algorithm>
 #include <memory>
 #include <chrono>
-
+#include <utility>
 
 namespace knylaw{
     
@@ -14,52 +15,55 @@ namespace knylaw{
         return f;
     }
     
-    //template<typename InIt, typename Func>
-    //Func for_each_step(InIt first, InIt last, size_t step, Func f) {        
-    //}
+
+    /**
+     * https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+     *
+     * Remove leading characters not satisfying caller-defined rules.
+     * @param str
+     * @param notSatisfy returns false if this character is to removed
+     */
+    inline void ltrim(std::string& str, std::function<bool(int)> notSatisfy) {
+        str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::move(notSatisfy)));
+    }
+
+    inline void ltrim(std::string& str) {
+        ltrim(str, [](int ch) -> bool {
+            return !std::isspace(ch);
+        });
+    }
+
+    inline void rtrim(std::string& str, std::function<bool(int)> notSatisfy) {
+        str.erase(
+                std::find_if(str.rbegin(), str.rend(), std::move(notSatisfy)).base(),
+                str.end()
+        );
+    }
+
+    inline void rtrim(std::string& str) {
+        rtrim(str, [](int ch) -> bool {
+            return !std::isspace(ch);
+        });
+    }
+
+    inline void trim(std::string & str) {
+        ltrim(str);
+        rtrim(str);
+    }
 
 
-#if _MSC_VER > 1700
     // Formatted std::string
     template<typename... Args>
     std::string stringf(const std::string& format, Args... args) {
-        size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+        auto size = static_cast<size_t>(snprintf(nullptr, 0, format.c_str(), args ...) + 1); // Extra space for '\0'
         std::unique_ptr<char[]> buf(new char[size]);
         snprintf(buf.get(), size, format.c_str(), args ...);
         return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
     }
-#endif
-
-    // For class instance that needs a name
-    class NameUtility {
-
-    public:
-
-        NameUtility(std::string name=""): Mname(name) {
-
-        }
-
-        ~NameUtility() {
-
-        }
-
-        inline std::string name() const {
-            return Mname;
-        }
-
-        inline void name(std::string n) {
-            this->Mname = n;
-        }
-
-    private:
-
-        std::string     Mname;
-    };
 
 
     namespace timing {
 
-#if _MSC_VER > 1700
 
         using TimePoint = decltype(std::chrono::high_resolution_clock::now());
         using Nano = std::chrono::nanoseconds;
@@ -67,17 +71,6 @@ namespace knylaw{
         using Micro = std::chrono::microseconds;
         using Sec = std::chrono::seconds;
         using Min = std::chrono::milliseconds;
-
-#else
-
-		typedef std::chrono::system_clock::time_point TimePoint;
-        typedef std::chrono::nanoseconds Nano ;
-        typedef std::chrono::milliseconds Milli;
-        typedef std::chrono::microseconds Micro;
-        typedef std::chrono::seconds Sec;
-        typedef std::chrono::milliseconds Min;
-
-#endif
 
         class Period {
 

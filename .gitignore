@@ -8,6 +8,8 @@
 *.lib
 *.sln
 
+bin/*-test
+
 knutils/
 jnumt/
 cpptest/
@@ -16,7 +18,7 @@ x64-Debug/
 packages/
 Debug/
 lib/
-bin/
+cmake-build-debug/
 
 
 ##
